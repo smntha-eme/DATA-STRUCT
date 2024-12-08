@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iomanip>
 #include <unistd.h> // for sleep()
+#include <algorithm> // for find()
 
 using namespace std;
 
@@ -50,6 +51,11 @@ public:
         }
     }
 
+    // Check if an ornament is already in the heap
+    bool isDuplicate(int ornament) {
+        return find(heap.begin(), heap.end(), ornament) != heap.end();
+    }
+
     // Remove the root (largest) ornament and reheapify
     void removeRoot() {
         if (heap.size() == 0) {
@@ -63,7 +69,7 @@ public:
 
     // Visualize the Max-Heap as a tree structure
     void visualizeHeap() {
-        cout << CYAN << "\nMax-Heap Visualization (ChristMax Tree): \n" << RESET;
+        cout << CYAN << "\n ChristMax Tree Design! \n" << RESET;
         int height = log2(heap.size()) + 1;
         int index = 0;
         for (int i = 0; i < height; ++i) {
@@ -116,45 +122,34 @@ int main() {
     cout << YELLOW << "Let's begin the fun!\n" << RESET;
 
     // A series of Christmas-themed questions to gather inputs for decorating the tree
-    cout << BLUE << "Question 1: On a scale of 1 to 10, how excited are you to celebrate Christmas this year? " << RESET;
-    cin >> ornament;
-    christMaxTree.insert(ornament);
-    cout << GREEN << "You added an ornament with excitement level " << ornament << "!\n" << RESET;
-    christMaxTree.visualizeHeap();
+    for (int i = 1; i <= 5; ++i) {
+        cout << BLUE << "Question " << i << ": ";
+        if (i == 1) {
+            cout << "On a scale of 1 to 10, how excited are you to celebrate Christmas this year? ";
+        } else if (i == 2) {
+            cout << "On a scale of 1 to 10, how much do you love decorating the Christmas tree? ";
+        } else if (i == 3) {
+            cout << "On a scale of 1 to 10, how much do you enjoy Christmas music? ";
+        } else if (i == 4) {
+            cout << "On a scale of 1 to 10, how excited are you for Christmas gifts? ";
+        } else {
+            cout << "On a scale of 1 to 10, how much do you love Christmas food? ";
+        }
 
-    sleep(1); // Sleep to give time for user to see each question's response
+        while (true) {
+            cin >> ornament;
+            if (christMaxTree.isDuplicate(ornament)) {
+                cout << RED << "This ornament has already been added! Please choose a different number.\n" << RESET;
+            } else {
+                christMaxTree.insert(ornament);
+                cout << GREEN << "You added an ornament with excitement level " << ornament << "!\n" << RESET;
+                break;
+            }
+        }
+        christMaxTree.visualizeHeap();
 
-    cout << BLUE << "Question 2: On a scale of 1 to 10, how much do you love decorating the Christmas tree? " << RESET;
-    cin >> ornament;
-    christMaxTree.insert(ornament);
-    cout << GREEN << "You added an ornament with decoration enthusiasm level " << ornament << "!\n" << RESET;
-    christMaxTree.visualizeHeap();
-
-    sleep(1);
-
-    cout << BLUE << "Question 3: On a scale of 1 to 10, how much do you enjoy Christmas music? " << RESET;
-    cin >> ornament;
-    christMaxTree.insert(ornament);
-    cout << GREEN << "You added an ornament with Christmas music enjoyment level " << ornament << "!\n" << RESET;
-    christMaxTree.visualizeHeap();
-
-    sleep(1);
-
-    cout << BLUE << "Question 4: On a scale of 1 to 10, how excited are you for Christmas gifts? " << RESET;
-    cin >> ornament;
-    christMaxTree.insert(ornament);
-    cout << GREEN << "You added an ornament with gift excitement level " << ornament << "!\n" << RESET;
-    christMaxTree.visualizeHeap();
-
-    sleep(1);
-
-    cout << BLUE << "Question 5: On a scale of 1 to 10, how much do you love Christmas food? " << RESET;
-    cin >> ornament;
-    christMaxTree.insert(ornament);
-    cout << GREEN << "You added an ornament with food excitement level " << ornament << "!\n" << RESET;
-    christMaxTree.visualizeHeap();
-
-    sleep(1);
+        sleep(1); // Sleep to give time for user to see each question's response
+    }
 
     // Allow the user to see the tree and make changes
     cout << "\n" << YELLOW << "Now, let's interact with your ChristMax Tree!" << RESET << endl;
@@ -173,3 +168,4 @@ int main() {
 
     return 0;
 }
+
