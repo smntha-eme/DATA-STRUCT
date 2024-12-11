@@ -1,5 +1,5 @@
 #include <iostream>
-#include <queue>
+#include <vector>
 #include <string>
 #include <map>
 using namespace std;
@@ -15,238 +15,274 @@ using namespace std;
 #define CYAN    "\033[36m"
 #define WHITE   "\033[37m"
 
-// Struct for Movie with priority (showtime in minutes from midnight)
-struct Movie {
-    string name;
-    int showtime; // Priority: showtime in minutes from midnight
+// Node structure for Binary Tree
+struct Node {
+    int seatNumber; // Seat number for booking (1 to 10)
+    Node* left;
+    Node* right;
 
-    // Constructor to initialize Movie with a name and showtime
-    Movie(string n, int t) : name(n), showtime(t) {}
-
-    // Overload operator to create a Min-Heap (earliest time comes first)
-    bool operator<(const Movie& other) const {
-        return showtime > other.showtime; // This ensures the earliest time comes first in the heap
-    }
+    Node(int num) : seatNumber(num), left(nullptr), right(nullptr) {}
 };
 
-// Binary Search Tree Node for Seats
-struct SeatNode {
-    int seatNumber;  // The number of the seat
-    bool isBooked;   // Whether the seat is booked or not
-    SeatNode* left;  // Left child (for binary search tree structure)
-    SeatNode* right; // Right child (for binary search tree structure)
-
-    // Constructor to initialize a SeatNode with a seat number
-    SeatNode(int seat) : seatNumber(seat), isBooked(false), left(nullptr), right(nullptr) {}
-};
-
-// Binary Search Tree Class for Managing Seats
-class SeatBST {
+class SeatTree {
 private:
-    SeatNode* root; // Root node of the binary search tree
+    Node* root;
+    int seatCount;
 
-    // Helper function to insert a seat node into the binary search tree
-    SeatNode* insert(SeatNode* node, int seatNumber) {
-        if (!node) return new SeatNode(seatNumber);  // Insert the seat if node is empty
-        if (seatNumber < node->seatNumber)
-            node->left = insert(node->left, seatNumber);  // Insert to the left subtree
-        else if (seatNumber > node->seatNumber)
-            node->right = insert(node->right, seatNumber); // Insert to the right subtree
-        return node;
+    void preorderTraversal(Node* node) {
+        if (node == nullptr) return;
+        cout << node->seatNumber << " ";
+        preorderTraversal(node->left);
+        preorderTraversal(node->right);
     }
 
-    // Helper function to perform in-order traversal to view seats
-    void inorder(SeatNode* node) {
-        if (!node) return; // Base case: if node is null, return
-        inorder(node->left); // Visit left subtree
-        cout << "  " << YELLOW << "Seat " << node->seatNumber << (node->isBooked ? " (Booked)" : " (Available)") << RESET << endl; // Print seat info
-        inorder(node->right); // Visit right subtree
+    void inorderTraversal(Node* node) {
+        if (node == nullptr) return;
+        inorderTraversal(node->left);
+        cout << node->seatNumber << " ";
+        inorderTraversal(node->right);
     }
 
-    // Helper function to search for a seat by seat number
-    SeatNode* search(SeatNode* node, int seatNumber) {
-        if (!node || node->seatNumber == seatNumber) return node; // If seat found or null, return the node
-        if (seatNumber < node->seatNumber)
-            return search(node->left, seatNumber); // Search in left subtree
-        return search(node->right, seatNumber); // Search in right subtree
-    }
-
-    // Helper function to delete a seat from the binary search tree
-    SeatNode* deleteNode(SeatNode* node, int seatNumber) {
-        if (!node) return node;  // If node is empty, return
-
-        // Traverse the tree to find the seat to delete
-        if (seatNumber < node->seatNumber)
-            node->left = deleteNode(node->left, seatNumber);  // Search in left subtree
-        else if (seatNumber > node->seatNumber)
-            node->right = deleteNode(node->right, seatNumber); // Search in right subtree
-        else { // Seat found
-            // Case when the node has only one child or no children
-            if (!node->left) {
-                SeatNode* temp = node->right;
-                delete node;  // Delete the current node
-                return temp;  // Return the right child
-            } else if (!node->right) {
-                SeatNode* temp = node->left;
-                delete node;  // Delete the current node
-                return temp;  // Return the left child
-            }
-
-            // Case when the node has two children:
-            // Find the inorder successor (smallest node in the right subtree)
-            SeatNode* temp = findMin(node->right);
-            node->seatNumber = temp->seatNumber; // Copy the inorder successor's seat number to the current node
-            node->right = deleteNode(node->right, temp->seatNumber);  // Delete the inorder successor
-        }
-        return node;
-    }
-
-    // Helper function to find the minimum node (leftmost node)
-    SeatNode* findMin(SeatNode* node) {
-        SeatNode* current = node;
-        while (current && current->left)  // Traverse left subtree until the leftmost node
-            current = current->left;
-        return current;  // Return the leftmost node
+    void postorderTraversal(Node* node) {
+        if (node == nullptr) return;
+        postorderTraversal(node->left);
+        postorderTraversal(node->right);
+        cout << node->seatNumber << " ";
     }
 
 public:
-    SeatBST() : root(nullptr) {}  // Constructor to initialize an empty tree
+    SeatTree() : root(nullptr), seatCount(0) {}
 
-    // Function to add a seat to the binary search tree
-    void addSeat(int seatNumber) {
-        root = insert(root, seatNumber);
-    }
-
-    // Function to view the seats (in-order traversal)
-    void viewSeats() {
-        if (!root) {
-            cout << RED << "No seats available.\n" << RESET;
+    void insert(int seatNumber) {
+        if (seatCount >= 10) {
+            cout << RED << "Cannot book more than 10 seats." << RESET << endl;
             return;
         }
-        inorder(root);
+
+        if (root == nullptr) {
+            root = new Node(seatNumber);
+            seatCount++;
+            return;
+        }
+
+        Node* current = root;
+        while (true) {
+            if (seatNumber < current->seatNumber) {
+                if (current->left == nullptr) {
+                    current->left = new Node(seatNumber);
+                    seatCount++;
+                    break;
+                }
+                current = current->left;
+            } else {
+                if (current->right == nullptr) {
+                    current->right = new Node(seatNumber);
+                    seatCount++;
+                    break;
+                }
+                current = current->right;
+            }
+        }
     }
 
-    // Function to book a seat (mark it as booked)
-    bool bookSeat(int seatNumber) {
-        SeatNode* seat = search(root, seatNumber);
-        if (!seat) {
-            cout << RED << "Seat " << seatNumber << " does not exist.\n" << RESET;
-            return false;
-        }
-        if (seat->isBooked) {
-            cout << RED << "Seat " << seatNumber << " is already booked.\n" << RESET;
-            return false;
-        }
-        seat->isBooked = true; // Mark the seat as booked
-        cout << GREEN << "Seat " << seatNumber << " successfully booked.\n" << RESET;
-        return true;
+    void viewPreorder() {
+        cout << CYAN << "Pre-order Traversal: " << RESET;
+        preorderTraversal(root);
+        cout << endl;
     }
 
-    // Function to delete a seat (remove it from the tree)
-    bool deleteSeat(int seatNumber) {
-        SeatNode* seat = search(root, seatNumber);
-        if (!seat) {
-            cout << RED << "Seat " << seatNumber << " does not exist.\n" << RESET;
-            return false;
-        }
-        root = deleteNode(root, seatNumber);  // Delete the seat from the tree
-        cout << GREEN << "Seat " << seatNumber << " successfully deleted.\n" << RESET;
-        return true;
+    void viewInorder() {
+        cout << CYAN << "In-order Traversal: " << RESET;
+        inorderTraversal(root);
+        cout << endl;
     }
 
-    // Function to cancel a booking (unbook and delete the seat)
-    bool cancelBooking(int seatNumber) {
-        SeatNode* seat = search(root, seatNumber);
-        if (!seat) {
-            cout << RED << "Seat " << seatNumber << " does not exist.\n" << RESET;
-            return false;
-        }
-        if (!seat->isBooked) {
-            cout << RED << "Seat " << seatNumber << " is not booked.\n" << RESET;
-            return false;
-        }
-        seat->isBooked = false; // Unmark the seat as booked
-        root = deleteNode(root, seatNumber);  // Delete the seat node from the tree
-        cout << GREEN << "Booking for Seat " << seatNumber << " successfully canceled and seat deleted.\n" << RESET;
-        return true;
+    void viewPostorder() {
+        cout << CYAN << "Post-order Traversal: " << RESET;
+        postorderTraversal(root);
+        cout << endl;
     }
 };
 
-// Max-Heap for Priority Customers based on age
-class PriorityQueue {
+// Custom Max-Heap for Priority Requests
+class PriorityHeap {
 private:
-    priority_queue<pair<int, string>> heap;  // Max-Heap by default using the first element (age)
+    vector<pair<int, string>> heap;
 
-public:
-    // Function to add a priority request (customer) to the heap
-    void addRequest(string customerName, int age) {
-        heap.push({age, customerName});  // Add the request to the heap
+    void heapifyUp(int index) {
+        while (index > 0) {
+            int parent = (index - 1) / 2;
+            if (heap[index].first <= heap[parent].first) break;
+            swap(heap[index], heap[parent]);
+            index = parent;
+        }
     }
 
-    // Function to process (serve) the next request in the heap (highest priority)
+    void heapifyDown(int index) {
+        int size = heap.size();
+        while (index < size) {
+            int left = 2 * index + 1;
+            int right = 2 * index + 2;
+            int largest = index;
+
+            if (left < size && heap[left].first > heap[largest].first) {
+                largest = left;
+            }
+
+            if (right < size && heap[right].first > heap[largest].first) {
+                largest = right;
+            }
+
+            if (largest == index) break;
+
+            swap(heap[index], heap[largest]);
+            index = largest;
+        }
+    }
+
+public:
+    void addRequest(const string &customerName, int age) {
+        heap.emplace_back(age, customerName);
+        heapifyUp(heap.size() - 1);
+    }
+
     void processNextRequest() {
         if (heap.empty()) {
             cout << RED << "No pending requests.\n" << RESET;
             return;
         }
-        auto next = heap.top();
-        heap.pop();
+        auto next = heap.front();
+        pop();
         cout << GREEN << "Processing request for " << next.second << " (Age: " << next.first << ")\n" << RESET;
     }
 
-    // Function to view all pending priority requests
+    void pop() {
+        if (heap.empty()) return;
+        heap[0] = heap.back();
+        heap.pop_back();
+        heapifyDown(0);
+    }
+
     void viewRequests() {
         if (heap.empty()) {
             cout << RED << "No pending requests.\n" << RESET;
             return;
         }
+
         cout << CYAN << "Pending requests:\n" << RESET;
-        auto tempHeap = heap; // Copy heap to view contents
-        while (!tempHeap.empty()) {
-            auto req = tempHeap.top();
+        for (const auto &req : heap) {
             cout << "  " << req.second << " (Age: " << req.first << ")\n";
-            tempHeap.pop();
         }
     }
 };
 
-int main() {
-    // Min-Heap for movies based on showtime
-    priority_queue<Movie> movieHeap;
-    map<string, SeatBST> movies;  // Map to store movies with their seats
+// Custom Min-Heap for Movies by Showtimes
+class MovieHeap {
+public:
+    struct Movie {
+        string name;
+        int showtime; // Priority: showtime in minutes from midnight
 
-    // Add movies to heap with showtimes
-    movieHeap.push(Movie("Hello, Love, Again", 13 * 60)); // 1:00 PM
-    movieHeap.push(Movie("Moana 2", 14 * 60 + 30));       // 2:30 PM
-    movieHeap.push(Movie("The Wicked", 17 * 60));         // 5:00 PM
+        Movie(string n, int t) : name(n), showtime(t) {}
+    };
 
-    // Add seats for each movie in the map
-    for (int i = 1; i <= 10; i++) {
-        movies["Hello, Love, Again"].addSeat(i);
-        movies["Moana 2"].addSeat(i);
-        movies["The Wicked"].addSeat(i);
+private:
+    vector<Movie> heap;
+
+    void heapifyUp(int index) {
+        while (index > 0) {
+            int parent = (index - 1) / 2;
+            if (heap[index].showtime >= heap[parent].showtime) break;
+            swap(heap[index], heap[parent]);
+            index = parent;
+        }
     }
 
-    string currentMovie;
+    void heapifyDown(int index) {
+        int size = heap.size();
+        while (index < size) {
+            int left = 2 * index + 1;
+            int right = 2 * index + 2;
+            int smallest = index;
+
+            if (left < size && heap[left].showtime < heap[smallest].showtime) {
+                smallest = left;
+            }
+
+            if (right < size && heap[right].showtime < heap[smallest].showtime) {
+                smallest = right;
+            }
+
+            if (smallest == index) break;
+
+            swap(heap[index], heap[smallest]);
+            index = smallest;
+        }
+    }
+
+public:
+    void push(const string &name, int showtime) {
+        heap.emplace_back(name, showtime);
+        heapifyUp(heap.size() - 1);
+    }
+
+    void pop() {
+        if (heap.empty()) return;
+        heap[0] = heap.back();
+        heap.pop_back();
+        heapifyDown(0);
+    }
+
+    bool empty() const {
+        return heap.empty();
+    }
+
+    Movie top() const {
+        if (heap.empty()) throw runtime_error("Heap is empty");
+        return heap[0];
+    }
+
+    void print() {
+        for (const auto &movie : heap) {
+            int hours = movie.showtime / 60;
+            int minutes = movie.showtime % 60;
+            string am_pm = (hours >= 12) ? "PM" : "AM";
+            if (hours > 12) hours -= 12;
+            if (hours == 0) hours = 12;
+
+            cout << YELLOW << "  " << movie.name << " - " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << " " << am_pm << RESET << "\n";
+        }
+    }
+
+    vector<Movie> getMovies() const {
+        return heap; // Return all movies in the heap
+    }
+};
+
+int main() {
+    MovieHeap movieHeap;
+    map<string, int> movies; // Map to store movies and their showtimes
+
+    SeatTree seatTree;
+
+    // Add movies to heap with showtimes
+    movieHeap.push("Hello, Love, Again", 13 * 60); // 1:00 PM
+    movieHeap.push("Moana 2", 14 * 60 + 30);       // 2:30 PM
+    movieHeap.push("The Wicked", 17 * 60);         // 5:00 PM
+
+    PriorityHeap priorityHeap;
     int choice;
 
-    cout << CYAN << "=============================================\n";
-    cout << "       Welcome to SM Cinema Legazpi!        \n";
-    cout << "        Your entertainment destination!      \n";
-    cout << "=============================================\n" << RESET;
-
-    PriorityQueue priorityQueue;
-
     do {
-        cout << "\n--- Main Menu ---\n";
-        if (currentMovie.empty()) {
-            cout << RED << "No movie selected.\n" << RESET;
-        } else {
-            cout << "Current Movie: " << currentMovie << "\n";
-        }
-        cout << BLUE << "1. View Movies by Showtimes\n";
+        cout << CYAN << "=============================================\n";
+        cout << "       Welcome to SM Cinema Legazpi!\n";
+        cout << "        Your entertainment destination!\n";
+        cout << "=============================================\n";
+
+        cout << "--- Main Menu ---\n";
+        cout << "1. View Movies by Showtimes\n";
         cout << "2. Choose Movie\n";
-        cout << "3. View Seats\n";
+        cout << "3. View Booked Seats\n";
         cout << "4. Book Seat\n";
         cout << "5. Cancel Booking\n";
         cout << "6. Add Priority Request\n";
@@ -257,85 +293,59 @@ int main() {
         cin >> choice;
 
         switch (choice) {
-        case 1: {
+        case 1:
             cout << "\nMovies by Showtimes:\n";
-            auto tempHeap = movieHeap; // Copy heap to view contents
-            while (!tempHeap.empty()) {
-                auto movie = tempHeap.top();
-                tempHeap.pop();
-                int hours = movie.showtime / 60;
-                int minutes = movie.showtime % 60;
-
-                string am_pm = (hours >= 12) ? "PM" : "AM";
-                if (hours > 12) hours -= 12; // Convert to 12-hour format
-                if (hours == 0) hours = 12;  // Midnight case (12 AM)
-
-                cout << YELLOW << "  " << movie.name << " - " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << " " << am_pm << RESET << "\n";
-            }
+            movieHeap.print();
             break;
-        }
+
         case 2: {
-            cout << "\nEnter the name of the movie you want to select: ";
-            cin.ignore();
-            getline(cin, currentMovie);
+                if (movieHeap.empty()) {
+                    cout << RED << "No movies available to choose from.\n" << RESET;
+                    break;
+                }
 
-            if (movies.find(currentMovie) == movies.end()) {
-                cout << RED << "Invalid movie selection. Please try again.\n" << RESET;
-                currentMovie.clear();
-            } else {
-                cout << "You selected: " << currentMovie << endl;
+                cout << "\nAvailable Movies:\n";
+                movieHeap.print();
 
-                auto tempHeap = movieHeap; // Copy heap to view contents
-                while (!tempHeap.empty()) {
-                    auto movie = tempHeap.top();
-                    tempHeap.pop();
-                    if (movie.name == currentMovie) {
+                cout << "Enter the movie name: ";
+                string chosenMovie;
+                cin.ignore(); // Clear the input buffer
+                getline(cin, chosenMovie);
+
+                bool found = false;
+                vector<MovieHeap::Movie> movies = movieHeap.getMovies();  // Get all movies
+                for (const auto &movie : movies) {  // Iterate over the movies
+                    if (movie.name == chosenMovie) {
+                        cout << GREEN << "You selected: " << movie.name << " at ";
                         int hours = movie.showtime / 60;
                         int minutes = movie.showtime % 60;
-
                         string am_pm = (hours >= 12) ? "PM" : "AM";
                         if (hours > 12) hours -= 12;
                         if (hours == 0) hours = 12;
 
-                        cout << GREEN << "Thank you for choosing SM Cinema. Your chosen movie, '" << currentMovie
-                             << "', will start at " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << " " << am_pm << "." << RESET << "\n";
+                        cout << hours << ":" << (minutes < 10 ? "0" : "") << minutes << " " << am_pm << "\n" << RESET;
+                        found = true;
                         break;
                     }
                 }
+
+                if (!found) {
+                    cout << RED << "Movie not found. Please enter a valid movie name.\n" << RESET;
+                }
+                break;
             }
-            break;
-        }
 
         case 3:
-            if (currentMovie.empty()) {
-                cout << RED << "Please select a movie first.\n" << RESET;
-            } else {
-                cout << "\nAvailable Seats for " << currentMovie << ":\n";
-                movies[currentMovie].viewSeats();
-            }
+            seatTree.viewPreorder();
+            seatTree.viewInorder();
+            seatTree.viewPostorder();
             break;
 
         case 4: {
-            if (currentMovie.empty()) {
-                cout << RED << "Please select a movie first.\n" << RESET;
-            } else {
-                int seatNumber;
-                cout << "Enter seat number to book: ";
-                cin >> seatNumber;
-                movies[currentMovie].bookSeat(seatNumber);
-            }
-            break;
-        }
-
-        case 5: {
-            if (currentMovie.empty()) {
-                cout << RED << "Please select a movie first.\n" << RESET;
-            } else {
-                int seatNumber;
-                cout << "Enter seat number to cancel booking: ";
-                cin >> seatNumber;
-                movies[currentMovie].cancelBooking(seatNumber);
-            }
+            int seat;
+            cout << "Enter seat number to book (1-10): ";
+            cin >> seat;
+            seatTree.insert(seat);
             break;
         }
 
@@ -347,16 +357,16 @@ int main() {
             getline(cin, customerName);
             cout << "Enter customer age: ";
             cin >> age;
-            priorityQueue.addRequest(customerName, age);
+            priorityHeap.addRequest(customerName, age);
             break;
         }
 
         case 7:
-            priorityQueue.processNextRequest();
+            priorityHeap.processNextRequest();
             break;
 
         case 8:
-            priorityQueue.viewRequests();
+            priorityHeap.viewRequests();
             break;
 
         case 0:
@@ -371,3 +381,14 @@ int main() {
 
     return 0;
 }
+
+/*In the provided C++ code, the design employs heaps instead of queues for managing priority requests and movie showtimes.
+Specifically, a **Max-Heap** is used in the `PriorityHeap` class to handle priority requests, where the highest priority
+(based on age) is processed first. This approach replaces a traditional queue structure, allowing for efficient handling
+of priority requests, particularly for senior citizens who are given higher priority for seat reservations. Similarly,
+the `MovieHeap` class uses a **Min-Heap** to manage movie showtimes, ensuring that movies are displayed in order of their
+showtime, with the earliest showtime being prioritized. This use of heaps rather than queues offers an optimized way of managing
+priority-based operations and improves efficiency, as heaps maintain their ordered structure with each insertion and removal.
+Furthermore, in the `SeatTree` class, a binary tree is used for seat management, where each node represents a seat, and insertion is
+done based on seat number. The heap-based design offers an alternative to queues, ensuring that priority requests and movie scheduling
+are handled in an efficient manner.*/
